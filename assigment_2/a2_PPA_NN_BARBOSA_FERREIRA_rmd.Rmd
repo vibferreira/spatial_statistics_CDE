@@ -1,0 +1,176 @@
+---
+title: "Point Pattern Analysis"
+author: "Vitoria Barbosa Ferreira"
+date: "5/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction 
+
+This assigment focuses on a point pattern analysis using natural and simulated individual tree locations, situated at the alpine tree line in the Passeier valley (South Tyrol, in North Italy).This dataset is part of Gudrun Wallentin’s thesis about individual tree modelling. 
+
+
+## Nearest Neighbour Point Analysis
+
+```{r cars, include=FALSE}
+library(spatstat)
+library(maptools)
+library(sf)
+library(sp)
+library(foreign)
+library(ggplot2)
+library(tidyverse)
+library(maps)
+library(spatialEco)
+
+
+setwd("G:/My Drive/Master/Copernicus - 15 01/Classes/2ºsemester/Spatial_Statistics/assigment_2")
+
+dt <- st_read("PPA_data/digitised_trees.shp")
+st <- st_read("PPA_data/simulated_trees.shp")
+
+#sf objects to sp objects
+dt_sp <- as(dt,Class = "Spatial")
+st_sp <- as(st,Class = "Spatial")
+
+# Average Nearest Neighbor Ratio 
+dt_ann <- nni(dt_sp)
+st_ann <- nni(st_sp)
+
+```
+
+In order to compare real-word trees distribution with simulated tree distribution, we will perform a Nearest Neighbor point Analysis, aiming to calculate the distance between individual trees and its nearest neighbor.
+
+Since we want to compare both datasets we will use the mean nearest neighbor. The output shows that the mean distance between the real-world trees is around 6.70m. Simulated trees shows a very simular result, around 6.67m. The nearest neighbor index, which indicates how clustered is the data, shows that the real-word trees tend to be more clustered (nn index less than 1) than the simulated trees (nn index more than 1).
+
+However, the p-value, or the probability of the observed spatial pattern was created by some random process (ESRI), of both datasets shows that it is very unlike to be completely randomly distributed, which is also proved by the high and very low z-score values. 
+
+
+```{r echo=FALSE, results='asis'}
+
+library(knitr)
+
+df <- data.frame(digitised = dt_ann)
+
+kable(df,caption="Real-world Trees")
+```
+
+```{r echo=FALSE}
+
+df_simu <- data.frame(simulated = st_ann)
+
+kable(df_simu,caption="Simulated Trees")
+```
+
+Now that we know that data is not completely random distributed, lets further analyze the simulated trees dataset. For that we will split the data based on its main attribute, the height. Two subgroups were defined based on the median value, which is about 11.88m. The histogram below shows the distribution of the simulated trees'height. 
+
+```{r echo=FALSE}
+#Histogram of simulated tree heights
+st_table <- read.dbf("PPA_data/simulated_trees.dbf")
+
+hist(st_table$HEIGHT, 
+     main = "Simulated Trees' Height", 
+     xlab = "Height",
+     xlim = c(min(st_table$HEIGHT),max(st_table$HEIGHT)),
+     col = '#B1FBE2',
+     border = '#B9BFBD')
+
+```
+```{r include=FALSE}
+
+median <- median(st_table$HEIGHT) 
+
+#subgroups of tree heights 
+st_small <- st %>% filter(HEIGHT<median)
+st_big <- st %>% filter(HEIGHT>median)
+
+#converting to ppp objects
+st_subgroup_1_ppp <- as.ppp(st_small) 
+st_subgroup_2_ppp <- as.ppp(st_big)
+
+#converting to sp objects
+st_subgroup_1_sp <- as(st_small ,Class = "Spatial")
+st_subgroup_2_sp <- as(st_big,Class = "Spatial")
+
+# Average Nearest Neighbor Ratio
+st_small_ann <- nni(st_subgroup_1_sp)
+st_big_ann <- nni(st_subgroup_2_sp)
+
+```
+
+
+By running the Nearest Neighbor Analysis again for each subgroup it is possible to conclude that the group of trees up to 11.88 meter high tend to me more clustered (nn index = 0.80) than the group of trees with less than 11.88 meters high (nn index = 1.10). 
+
+
+```{r echo=FALSE}
+df_small <- data.frame(simulated = st_small_ann)
+
+kable(df_small,caption="Simulated Trees - Trees'Height < 11.88")
+```
+```{r echo=FALSE}
+df_big <- data.frame(simulated = st_big_ann)
+
+kable(df_big,caption="Simulated Trees - Trees'Height > 11.88m")
+```
+In the sequence, we decided to further split the simulated data with trees'height less than 11.88m into clustered, dispersed and random by visual inspection of the following plot.  
+
+```{r echo=FALSE}
+
+#areas that are typical for each of the three point distribution patterns
+plot(st_subgroup_1_ppp, use.marks=TRUE, main='',colmap="blue")
+maps::map.axes(cex.axis=0.9)
+title(main = "Simulated Trees (<11.88m high)")
+
+#subsetting by distribution pattern groups
+clustered <- subset(st_subgroup_1_ppp, subset=x>673250&y<5189300)
+
+dispersed <- subset(st_subgroup_1_ppp, subset=x<673250&y<5189300)
+
+random <-  subset(st_subgroup_1_ppp, subset=y>5189300)
+```
+
+```{r include=FALSE}
+#Nearest Neighbor Analysis - Clustered
+clustered_sp <- as.SpatialPoints.ppp(clustered)
+clustered_ann <- nni(clustered_sp)
+
+#Nearest Neighbor Analysis - Dispersed
+dispersed_sp <- as.SpatialPoints.ppp(dispersed)
+dispersed_ann <- nni(dispersed_sp)
+
+#Nearest Neighbor Analysis - Random
+random_sp <- as.SpatialPoints.ppp(random)
+random_ann <- nni(random_sp)
+```
+
+Next, the Nearest Neighbor Analysis were run one last time. As expected, the Nearest Neighbor Index of the Clustered group is the lowest indicating it is the most clustered group. Even though we set the group random based on visual interpretation, the NNA proved it is not completely random, although less clustered than the cluster group. We can also see that mean distance between the random trees group is more than 3 times higher than the Clustered group. 
+
+```{r echo=FALSE}
+df_clustered <- data.frame(clustered=clustered_ann)
+kable(df_clustered,caption = "Clustered")
+```
+```{r echo=FALSE}
+df_dispersed <- data.frame(dispersed=dispersed_ann)
+kable(df_dispersed,caption = "Dispersed")
+```
+```{r echo=FALSE}
+df_random <- data.frame(random=random_ann)
+kable(df_random,caption = "Random")
+```
+
+## Ripley‘s K-function
+
+Lastly, we will use the Ripley's k-function to analyze the degree of clustering of the subgroups: clustered, dispersed and random. Instead of measuring the nearest distance between the points, the Ripley‘s K-function method considers all the distances between events in the study area.In the plots below, the dashed line represents the expected value under complete spatial randomness (CSR) and the black solid line indicates the actual estimated values. In all cases, since the estimated values varies significantly frpm CSR, it indicates the tendency of clustering, emphasizing the previous outputs. 
+
+```{r echo=FALSE}
+
+plot(Kest(clustered, correction = "Ripley"))
+plot(Kest(dispersed,correction = "Ripley"))
+plot(Kest(random, correction = "Ripley"))
+        
+```
+
