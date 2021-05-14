@@ -2,7 +2,9 @@
 title: "Point Pattern Analysis"
 author: "Vitoria Barbosa Ferreira"
 date: "5/13/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -54,14 +56,14 @@ However, the p-value, or the probability of the observed spatial pattern was cre
 
 library(knitr)
 
-df <- data.frame(digitised = dt_ann)
+df <- data.frame(d= dt_ann)
 
 kable(df,caption="Real-world Trees")
 ```
 
 ```{r echo=FALSE}
 
-df_simu <- data.frame(simulated = st_ann)
+df_simu <- data.frame(s = st_ann)
 
 kable(df_simu,caption="Simulated Trees")
 ```
@@ -107,12 +109,12 @@ By running the Nearest Neighbor Analysis again for each subgroup it is possible 
 
 
 ```{r echo=FALSE}
-df_small <- data.frame(simulated = st_small_ann)
+df_small <- data.frame(s = st_small_ann)
 
 kable(df_small,caption="Simulated Trees - Trees'Height < 11.88")
 ```
 ```{r echo=FALSE}
-df_big <- data.frame(simulated = st_big_ann)
+df_big <- data.frame(s = st_big_ann)
 
 kable(df_big,caption="Simulated Trees - Trees'Height > 11.88m")
 ```
@@ -150,15 +152,15 @@ random_ann <- nni(random_sp)
 Next, the Nearest Neighbor Analysis were run one last time. As expected, the Nearest Neighbor Index of the Clustered group is the lowest indicating it is the most clustered group. Even though we set the group random based on visual interpretation, the NNA proved it is not completely random, although less clustered than the cluster group. We can also see that mean distance between the random trees group is more than 3 times higher than the Clustered group. 
 
 ```{r echo=FALSE}
-df_clustered <- data.frame(clustered=clustered_ann)
+df_clustered <- data.frame(c=clustered_ann)
 kable(df_clustered,caption = "Clustered")
 ```
 ```{r echo=FALSE}
-df_dispersed <- data.frame(dispersed=dispersed_ann)
+df_dispersed <- data.frame(d=dispersed_ann)
 kable(df_dispersed,caption = "Dispersed")
 ```
 ```{r echo=FALSE}
-df_random <- data.frame(random=random_ann)
+df_random <- data.frame(r=random_ann)
 kable(df_random,caption = "Random")
 ```
 

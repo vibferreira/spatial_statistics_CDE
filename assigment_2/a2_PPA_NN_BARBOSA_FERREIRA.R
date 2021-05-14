@@ -7,6 +7,7 @@ library(ggplot2)
 library(tidyverse)
 library(maps)
 library(spatialEco)
+tinytex::install_tinytex()
 
 setwd("G:/My Drive/Master/Copernicus - 15 01/Classes/2ºsemester/Spatial_Statistics/assigment_2")
 
